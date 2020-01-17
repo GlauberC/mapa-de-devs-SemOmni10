@@ -20,6 +20,7 @@ import {
 } from "./styles";
 
 import api from "../../services/api";
+import { connect, disconnect, subscribeToNewDevs } from "../../services/socket";
 
 export default function Main({ navigation }) {
   const [currentRegion, setCurrentRegion] = useState(null);
@@ -51,8 +52,18 @@ export default function Main({ navigation }) {
     });
   }, []);
 
+  useEffect(() => {
+    subscribeToNewDevs(dev => setDevs([...devs, dev]));
+  }, [devs]);
+
   function handleRegionChanged(region) {
     setCurrentRegion(region);
+  }
+
+  function setupWebSocket() {
+    disconnect();
+    const { latitude, longitude } = currentRegion;
+    connect(latitude, longitude, techs);
   }
 
   async function loadDevs() {
@@ -65,6 +76,7 @@ export default function Main({ navigation }) {
       }
     });
     setDevs(response.data);
+    setupWebSocket();
   }
 
   if (!currentRegion) {
